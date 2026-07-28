@@ -484,3 +484,103 @@ describe('OmniScrape MCP server (end to end)', () => {
     assert.match(stderr, /bridge listening/);
   });
 });
+
+/**
+ * The bridge needs a specific TCP port; MCP does not. Losing the port must not
+ * cost the client its tools, because a server that exits during the handshake
+ * registers nothing and is indistinguishable from a server that was never
+ * configured — the agent is left with no way to say why. Everything here failed
+ * before the transports were reordered in index.js.
+ */
+describe('OmniScrape MCP server (bridge port already taken)', () => {
+  let squatter;
+  let squattedPort;
+  let child;
+  let client;
+  let stderr = '';
+  let exited = null;
+
+  before(async () => {
+    squattedPort = await freePort();
+
+    // Hold the port for real, rather than mocking the failure.
+    squatter = createServer();
+    await new Promise((resolve, reject) => {
+      squatter.once('error', reject);
+      squatter.listen(squattedPort, '127.0.0.1', resolve);
+    });
+
+    child = spawn(process.execPath, [serverEntry], {
+      env: {
+        ...process.env,
+        OMNISCRAPE_PORT: String(squattedPort),
+        OMNISCRAPE_LOG_LEVEL: 'debug',
+      },
+      stdio: ['pipe', 'pipe', 'pipe'],
+    });
+    child.stderr.setEncoding('utf8');
+    child.stderr.on('data', (chunk) => {
+      stderr += chunk;
+    });
+    child.on('exit', (code, signal) => {
+      exited = { code, signal };
+    });
+
+    client = new StdioClient(child);
+  });
+
+  after(async () => {
+    child?.kill('SIGTERM');
+    if (child && child.exitCode === null && child.signalCode === null) {
+      await Promise.race([once(child, 'exit'), new Promise((r) => setTimeout(r, 3_000))]);
+      if (child.exitCode === null && child.signalCode === null) child.kill('SIGKILL');
+    }
+    await new Promise((resolve) => squatter.close(resolve));
+  });
+
+  it('stays alive instead of exiting on EADDRINUSE', async () => {
+    const result = await client.request('initialize', {
+      protocolVersion: '2024-11-05',
+      capabilities: {},
+      clientInfo: { name: 'degraded-test', version: '0.0.0' },
+    });
+    assert.equal(exited, null, `Server exited on a busy port.\nstderr:\n${stderr}`);
+    assert.equal(result.serverInfo.name, 'omniscrape');
+  });
+
+  it('still advertises every tool, so the agent can ask what went wrong', async () => {
+    const { tools } = await client.request('tools/list');
+    assert.deepEqual(
+      tools.map((t) => t.name).sort(),
+      ['get_active_tab_markdown', 'get_bridge_status', 'scrape_selected_elements'],
+    );
+  });
+
+  it('reports the port clash through get_bridge_status', async () => {
+    const result = await client.request('tools/call', {
+      name: 'get_bridge_status',
+      arguments: { probe: false },
+    });
+    const status = JSON.parse(result.content[0].text);
+
+    assert.equal(status.listening, false);
+    assert.match(status.start_error, /already in use/i);
+    assert.match(status.start_error, new RegExp(String(squattedPort)));
+    // The advice must be about the port, not about loading the extension.
+    assert.match(status.hint, /not listening/i);
+  });
+
+  it('blames the bridge, not Chrome, when a scrape is attempted', async () => {
+    const result = await client.request('tools/call', {
+      name: 'get_active_tab_markdown',
+      arguments: {},
+    });
+    assert.equal(result.isError, true);
+    assert.match(result.content[0].text, /not listening/i);
+    assert.doesNotMatch(result.content[0].text, /popup shows "Connected"/);
+  });
+
+  it('logged the failure to stderr without corrupting the MCP channel', () => {
+    assert.match(stderr, /bridge failed to start/i);
+  });
+});

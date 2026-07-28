@@ -112,6 +112,14 @@ export class ExtensionBridge extends EventEmitter {
     this.heartbeatTimer = null;
     this.started = false;
 
+    /**
+     * Why the last `start()` failed, or null. The process deliberately stays
+     * alive when the bridge cannot bind, so this is the only record of what
+     * went wrong — `status()` hands it to the agent.
+     * @type {Error|null}
+     */
+    this.startError = null;
+
     /** Optional CaptureInbox, wired by `attachInbox()` for the /captures route. */
     this.inbox = null;
 
@@ -149,6 +157,9 @@ export class ExtensionBridge extends EventEmitter {
     return {
       server: { name: config.name, version: config.version },
       listening: this.started,
+      // Present only when the bridge is down, so a scrape failure can be traced
+      // to "the port was taken" rather than "the browser is not connected".
+      start_error: this.startError ? this.startError.message : null,
       bridge_url: `ws://${this.host}:${this.port}`,
       auth: {
         token_required: Boolean(this.token),
@@ -172,7 +183,28 @@ export class ExtensionBridge extends EventEmitter {
   async start() {
     if (this.started) return;
 
-    await new Promise((resolve, reject) => {
+    try {
+      await this.#listen();
+    } catch (error) {
+      // Remember the reason. The caller is expected to keep the process up so
+      // the MCP tools can explain the outage, and by then the stack is gone.
+      this.startError = error;
+      throw error;
+    }
+
+    this.started = true;
+    this.startError = null;
+    this.#startHeartbeat();
+    logger.info('bridge listening', {
+      ws: `ws://${this.host}:${this.port}`,
+      health: `http://${this.host}:${this.port}/health`,
+      token_required: Boolean(this.token),
+    });
+  }
+
+  /** Bind the HTTP server, translating EADDRINUSE into something actionable. */
+  #listen() {
+    return new Promise((resolve, reject) => {
       const onError = (error) => {
         this.httpServer.off('listening', onListening);
         if (error.code === 'EADDRINUSE') {
@@ -194,14 +226,6 @@ export class ExtensionBridge extends EventEmitter {
       this.httpServer.once('error', onError);
       this.httpServer.once('listening', onListening);
       this.httpServer.listen(this.port, this.host);
-    });
-
-    this.started = true;
-    this.#startHeartbeat();
-    logger.info('bridge listening', {
-      ws: `ws://${this.host}:${this.port}`,
-      health: `http://${this.host}:${this.port}/health`,
-      token_required: Boolean(this.token),
     });
   }
 
@@ -253,11 +277,16 @@ export class ExtensionBridge extends EventEmitter {
   call(method, params = {}, options = {}) {
     const client = this.primaryClient();
     if (!client) {
+      // Two very different failures land here. If the bridge never bound, no
+      // extension *could* have connected, and telling the user to check Chrome
+      // sends them hunting in the wrong place.
       return Promise.reject(
         new BridgeError(
           ERROR_CODE.NOT_CONNECTED,
-          'No OmniScrape extension is connected to the bridge. Open Chrome, make sure the ' +
-            'extension is loaded and enabled, then check its popup shows "Connected".',
+          this.startError
+            ? `The bridge is not listening, so the extension has nothing to connect to. ${this.startError.message}`
+            : 'No OmniScrape extension is connected to the bridge. Open Chrome, make sure the ' +
+              'extension is loaded and enabled, then check its popup shows "Connected".',
         ),
       );
     }

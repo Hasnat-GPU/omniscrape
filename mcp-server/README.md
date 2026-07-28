@@ -200,10 +200,18 @@ newline-delimited JSON-RPC. One stray `console.log` corrupts the stream and the
 client drops the connection with an opaque parse error. Everything diagnostic
 goes through `logger`, which writes to stderr. The test suite asserts this.
 
-**Port 3000 is popular.** If the server cannot bind, it exits with a message
-saying so — check the MCP client's server logs. Set `OMNISCRAPE_PORT` and update
-the extension's Bridge URL to match.
+**Port 3000 is popular.** If the bridge cannot bind, the server keeps running in
+a degraded mode: stdio connects first, so all three tools stay registered and
+report the problem instead of vanishing. `get_bridge_status` returns
+`listening: false` with a `start_error` naming the port, and a scrape fails
+saying the bridge is not listening rather than blaming Chrome. Fix it by setting
+`OMNISCRAPE_PORT` and updating the extension's Bridge URL to match.
+
+This ordering is deliberate and load-bearing. Binding the port before connecting
+the transport means a busy port kills the process mid-handshake, the client
+registers zero tools, and the agent cannot tell "misconfigured" from "never
+installed". Do not reverse it; `test/e2e.test.js` pins the behaviour.
 
 **A killed client can leak the server.** The server shuts down when its stdin
 closes, which is how MCP clients signal "stop". If a server is ever orphaned it
-keeps the port, and the next start fails with `EADDRINUSE`.
+keeps the port, and the next start finds it taken.

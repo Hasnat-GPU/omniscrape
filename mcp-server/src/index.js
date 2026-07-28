@@ -80,18 +80,29 @@ async function main() {
   // ---------------------------------------------------------------------------
   // Start
   // ---------------------------------------------------------------------------
-  // Order matters: bring the bridge up first so the extension can reconnect
-  // immediately, then hand stdio to the MCP transport.
-  await bridge.start();
-
+  // Order matters, and stdio goes first. The bridge binds a fixed TCP port, so
+  // it can fail for reasons that have nothing to do with MCP: a stale server
+  // from a previous session, or anything else that happens to own port 3000.
+  // Letting that failure escape would kill the process during the MCP handshake
+  // and register no tools at all, leaving the agent to conclude the server does
+  // not exist. A server whose tools can explain the outage is far more useful
+  // than no server, so connect the transport first and treat a dead bridge as a
+  // degraded state rather than a fatal one.
   const transport = new StdioServerTransport();
   await server.connect(transport);
+
+  try {
+    await bridge.start();
+  } catch (error) {
+    logger.exception('bridge failed to start; serving in degraded mode', error);
+  }
 
   logger.info('mcp server ready', {
     name: config.name,
     version: config.version,
     bridge: bridgeUrl(),
     health: healthUrl(),
+    bridge_listening: bridge.started,
   });
 
   // ---------------------------------------------------------------------------

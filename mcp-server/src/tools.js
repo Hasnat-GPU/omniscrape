@@ -105,6 +105,26 @@ function renderPage(capture) {
   return header + capture.markdown_content;
 }
 
+/**
+ * Advice to attach to a status report, or undefined when all is well. Order
+ * matters: a bridge that never bound is the more fundamental problem, and
+ * telling someone to load the extension while nothing is listening for it
+ * sends them debugging Chrome instead of the port it cannot reach.
+ */
+function hintFor(status) {
+  if (status.start_error) {
+    return `The bridge is not listening, so no extension can connect. ${status.start_error}`;
+  }
+  if (!status.extension_connected) {
+    return (
+      `Nothing is connected. The server is listening on ${status.bridge_url}. Load the ` +
+      `extension from the /extension folder at chrome://extensions (Developer mode -> ` +
+      `Load unpacked) and confirm its popup shows "Connected".`
+    );
+  }
+  return undefined;
+}
+
 /** Render point-and-click results as pretty JSON — these really are records. */
 function renderFields(capture) {
   const fields = capture.extracted_fields;
@@ -276,11 +296,7 @@ export function registerTools(server, bridge) {
           JSON.stringify(
             {
               ...status,
-              hint: status.extension_connected
-                ? undefined
-                : `Nothing is connected. The server is listening on ${status.bridge_url}. Load the ` +
-                  `extension from the /extension folder at chrome://extensions (Developer mode -> ` +
-                  `Load unpacked) and confirm its popup shows "Connected".`,
+              hint: hintFor(status),
             },
             null,
             2,
