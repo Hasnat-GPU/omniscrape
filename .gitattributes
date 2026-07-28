@@ -1,0 +1,8 @@
+# Store text as LF and check it out as LF on every platform. Without this, a
+# Windows clone commits CRLF back and the next contributor sees every file as
+# rewritten end to end, burying the real change in the diff.
+* text=auto eol=lf
+
+# Never touch binaries.
+*.png binary
+*.zip binary
