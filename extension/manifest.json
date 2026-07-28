@@ -1,0 +1,55 @@
+{
+  "manifest_version": 3,
+  "name": "OmniScrape MCP",
+  "version": "0.1.0",
+  "description": "Point-and-click any element on a page and hand it straight to Claude over MCP. No copy-paste, no API keys.",
+  "minimum_chrome_version": "114",
+
+  "permissions": [
+    "activeTab",
+    "scripting",
+    "storage",
+    "sidePanel",
+    "alarms"
+  ],
+
+  "optional_host_permissions": [
+    "http://*/*",
+    "https://*/*"
+  ],
+
+  "background": {
+    "service_worker": "background/service-worker.js",
+    "type": "module"
+  },
+
+  "action": {
+    "default_title": "OmniScrape — open panel",
+    "default_icon": {
+      "16": "icons/icon16.png",
+      "32": "icons/icon32.png",
+      "48": "icons/icon48.png",
+      "128": "icons/icon128.png"
+    }
+  },
+
+  "side_panel": {
+    "default_path": "sidepanel/index.html"
+  },
+
+  "options_page": "options/index.html",
+
+  "icons": {
+    "16": "icons/icon16.png",
+    "32": "icons/icon32.png",
+    "48": "icons/icon48.png",
+    "128": "icons/icon128.png"
+  },
+
+  "commands": {
+    "toggle-selection": {
+      "suggested_key": { "default": "Alt+Shift+S" },
+      "description": "Toggle OmniScrape selection mode on the current tab"
+    }
+  }
+}

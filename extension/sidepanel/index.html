@@ -1,0 +1,99 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>OmniScrape</title>
+    <link rel="stylesheet" href="sidepanel.css" />
+  </head>
+  <body>
+    <header class="header">
+      <div class="brand">
+        <img src="../icons/icon32.png" alt="" width="20" height="20" />
+        <span>OmniScrape</span>
+      </div>
+      <button
+        type="button"
+        class="status"
+        id="status"
+        title="Bridge connection to the MCP server. Click to reconnect."
+      >
+        <span class="dot" id="status-dot"></span>
+        <span id="status-label">Connecting…</span>
+      </button>
+    </header>
+
+    <main class="main">
+      <!-- Shown only when the extension has not been granted page access. -->
+      <section class="notice notice--warn" id="permission-banner" hidden>
+        <p class="notice__title">Page access needed</p>
+        <p class="notice__body">
+          Claude can only read a tab if you grant access. Chrome requires this to come from a
+          button you click.
+        </p>
+        <button type="button" class="btn btn--primary btn--block" id="btn-grant">
+          Grant page access
+        </button>
+      </section>
+
+      <!-- Shown when the current tab can never be scraped (chrome://, store…). -->
+      <section class="notice notice--muted" id="unscrapable-banner" hidden>
+        <p class="notice__body" id="unscrapable-text"></p>
+      </section>
+
+      <section class="tab" id="tab-card">
+        <p class="tab__title" id="tab-title">No active tab</p>
+        <p class="tab__url" id="tab-url"></p>
+      </section>
+
+      <section class="actions">
+        <button type="button" class="btn btn--primary btn--block" id="btn-select">
+          <span id="btn-select-label">Start Selecting Elements</span>
+        </button>
+        <button type="button" class="btn btn--block" id="btn-extract">Extract Full Page</button>
+      </section>
+
+      <section class="fields" id="fields-section" hidden>
+        <div class="fields__head">
+          <h2 class="fields__title">
+            Selected fields <span class="pill" id="field-count">0</span>
+          </h2>
+          <button type="button" class="btn btn--ghost btn--sm" id="btn-clear">Clear</button>
+        </div>
+        <ul class="fields__list" id="fields-list"></ul>
+        <p class="fields__hint">
+          Click a row's <b>All</b> / <b>One</b> toggle to scrape every match or just the element you
+          picked.
+        </p>
+      </section>
+
+      <section class="empty" id="empty-state">
+        <p class="empty__title">Nothing selected yet</p>
+        <p class="empty__body">
+          Press <b>Start Selecting Elements</b>, then click things on the page. Pick one row of a
+          list and OmniScrape finds the rest.
+        </p>
+      </section>
+
+      <section class="preview" id="preview" hidden>
+        <div class="preview__head">
+          <h2 class="preview__title">Last capture</h2>
+          <button type="button" class="btn btn--ghost btn--sm" id="btn-copy">Copy</button>
+        </div>
+        <pre class="preview__body" id="preview-body"></pre>
+      </section>
+    </main>
+
+    <footer class="footer">
+      <button type="button" class="btn btn--primary btn--block" id="btn-send">Send to Claude</button>
+      <div class="footer__meta">
+        <span class="footer__url" id="bridge-url"></span>
+        <button type="button" class="link" id="btn-options">Settings</button>
+      </div>
+    </footer>
+
+    <div class="toast" id="toast" role="status" aria-live="polite" hidden></div>
+
+    <script src="sidepanel.js" type="module"></script>
+  </body>
+</html>

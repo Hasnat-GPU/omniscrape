@@ -1,0 +1,28 @@
+{
+  "name": "omniscrape-mcp-server",
+  "version": "0.1.0",
+  "description": "Local MCP server that bridges Claude to the OmniScrape Chrome extension over a localhost WebSocket.",
+  "license": "MIT",
+  "type": "module",
+  "private": true,
+  "bin": {
+    "omniscrape-mcp": "./src/index.js"
+  },
+  "main": "./src/index.js",
+  "engines": {
+    "node": ">=20.0.0"
+  },
+  "scripts": {
+    "start": "node src/index.js",
+    "dev": "node --watch src/index.js",
+    "test": "node scripts/check-protocol.mjs && node --test --test-timeout=20000 \"test/**/*.test.js\"",
+    "check:protocol": "node scripts/check-protocol.mjs",
+    "health": "node --input-type=module -e \"const r = await fetch('http://127.0.0.1:3000/health'); console.log(JSON.stringify(await r.json(), null, 2));\""
+  },
+  "dependencies": {
+    "@modelcontextprotocol/sdk": "^1.22.0",
+    "express": "^5.1.0",
+    "ws": "^8.19.0",
+    "zod": "^3.25.76"
+  }
+}

@@ -1,0 +1,212 @@
+/**
+ * Options page styling.
+ *
+ * Reuses the panel's design tokens (colours, radii, button styles) so the two
+ * surfaces read as one product, then adds the wider form layout the options
+ * page needs and the panel does not.
+ */
+
+@import url("../sidepanel/sidepanel.css");
+
+body.options {
+  display: block;
+  padding: 28px 20px 60px;
+  font-size: 14px;
+
+  /* Undo the panel's fixed-viewport frame. The panel is a non-scrolling column
+     whose middle scrolls; this is an ordinary page that must scroll as a whole,
+     and inheriting `height: 100%; overflow: hidden` would clip it. */
+  height: auto;
+  min-height: 100%;
+  overflow: visible;
+}
+
+.page {
+  max-width: 620px;
+  margin: 0 auto;
+}
+
+.page__head {
+  display: flex;
+  align-items: center;
+  gap: 14px;
+  margin-bottom: 22px;
+}
+
+.page__head img {
+  border-radius: 9px;
+  flex: none;
+}
+
+.page__head h1 {
+  margin: 0;
+  font-size: 19px;
+  font-weight: 680;
+  letter-spacing: -0.015em;
+}
+
+.page__sub {
+  margin: 2px 0 0;
+  font-size: 13px;
+  color: var(--text-muted);
+}
+
+/* ------------------------------------------------------------------ cards -- */
+
+.card {
+  padding: 18px 18px 16px;
+  margin-bottom: 16px;
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+  background: var(--bg-raised);
+  box-shadow: var(--shadow);
+}
+
+.card h2 {
+  margin: 0 0 4px;
+  font-size: 14px;
+  font-weight: 660;
+}
+
+.card__hint {
+  margin: 0 0 14px;
+  font-size: 12.5px;
+  line-height: 1.55;
+  color: var(--text-muted);
+}
+
+.card__hint:last-child {
+  margin-bottom: 0;
+  margin-top: 12px;
+}
+
+.card__actions {
+  display: flex;
+  align-items: center;
+  gap: 9px;
+  margin-top: 16px;
+  flex-wrap: wrap;
+}
+
+code {
+  font-family: var(--mono);
+  font-size: 0.92em;
+  padding: 1px 5px;
+  border-radius: 4px;
+  background: var(--bg-sunken);
+  border: 1px solid var(--border);
+}
+
+/* ------------------------------------------------------------------ forms -- */
+
+.field-row {
+  display: block;
+  margin-bottom: 14px;
+}
+
+.field-row__label {
+  display: flex;
+  align-items: center;
+  gap: 7px;
+  margin-bottom: 5px;
+  font-size: 12.5px;
+  font-weight: 600;
+}
+
+.field-row__note {
+  font-weight: 500;
+  font-size: 11px;
+  color: var(--text-faint);
+  padding: 1px 6px;
+  border-radius: 9999px;
+  background: var(--bg-sunken);
+  border: 1px solid var(--border);
+}
+
+.field-row input[type="text"],
+.field-row input[type="password"],
+.field-row select {
+  width: 100%;
+  font: inherit;
+  font-size: 13px;
+  padding: 8px 10px;
+  color: var(--text);
+  background: var(--bg);
+  border: 1px solid var(--border-strong);
+  border-radius: var(--radius-sm);
+}
+
+.field-row input[type="text"],
+.field-row input[type="password"] {
+  font-family: var(--mono);
+  font-size: 12.5px;
+}
+
+.field-row input:focus,
+.field-row select:focus {
+  outline: 2px solid var(--accent);
+  outline-offset: 1px;
+  border-color: var(--accent);
+}
+
+.check-row {
+  display: flex;
+  align-items: flex-start;
+  gap: 10px;
+  padding: 10px 0;
+  cursor: pointer;
+  border-top: 1px solid var(--border);
+}
+
+.check-row:first-of-type {
+  border-top: 0;
+}
+
+.check-row input[type="checkbox"] {
+  margin: 2px 0 0;
+  width: 15px;
+  height: 15px;
+  accent-color: var(--accent);
+  flex: none;
+  cursor: pointer;
+}
+
+.check-row b {
+  display: block;
+  font-size: 12.5px;
+  font-weight: 600;
+}
+
+.check-row em {
+  display: block;
+  margin-top: 2px;
+  font-style: normal;
+  font-size: 12px;
+  line-height: 1.5;
+  color: var(--text-muted);
+}
+
+.status-text {
+  font-size: 12.5px;
+  color: var(--text-muted);
+}
+
+.status-text[data-tone="ok"] {
+  color: var(--ok);
+  font-weight: 600;
+}
+
+.status-text[data-tone="bad"] {
+  color: var(--danger);
+  font-weight: 600;
+}
+
+/* The panel positions its toast against a narrow fixed viewport; centre it
+   here instead so it does not stretch across the full options width. */
+body.options .toast {
+  left: 50%;
+  right: auto;
+  transform: translateX(-50%);
+  min-width: 240px;
+  text-align: center;
+}

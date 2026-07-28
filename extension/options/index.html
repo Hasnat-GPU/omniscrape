@@ -1,0 +1,124 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>OmniScrape settings</title>
+    <link rel="stylesheet" href="options.css" />
+  </head>
+  <body class="options">
+    <div class="page">
+      <header class="page__head">
+        <img src="../icons/icon48.png" alt="" width="36" height="36" />
+        <div>
+          <h1>OmniScrape settings</h1>
+          <p class="page__sub">Connection to the local MCP server, and defaults for manual captures.</p>
+        </div>
+      </header>
+
+      <section class="card">
+        <h2>Bridge</h2>
+        <p class="card__hint">
+          Where the MCP server is listening. The server prints this on startup and serves a health
+          check at the matching <code>http://…/health</code> URL.
+        </p>
+
+        <label class="field-row">
+          <span class="field-row__label">Bridge URL</span>
+          <input type="text" id="bridgeUrl" spellcheck="false" placeholder="ws://127.0.0.1:3000" />
+        </label>
+
+        <label class="field-row">
+          <span class="field-row__label">
+            Token
+            <span class="field-row__note">optional</span>
+          </span>
+          <input type="password" id="token" spellcheck="false" placeholder="(none)" autocomplete="off" />
+        </label>
+        <p class="card__hint">
+          Only needed if you set <code>OMNISCRAPE_TOKEN</code> on the server. It stops other local
+          programs from connecting to the bridge and reading your scrapes.
+        </p>
+
+        <label class="check-row">
+          <input type="checkbox" id="autoConnect" />
+          <span>
+            <b>Connect automatically</b>
+            <em>Reconnect whenever Chrome starts or the connection drops.</em>
+          </span>
+        </label>
+
+        <div class="card__actions">
+          <button type="button" class="btn btn--primary" id="btn-save">Save &amp; reconnect</button>
+          <button type="button" class="btn" id="btn-test">Test connection</button>
+          <span class="status-text" id="test-result"></span>
+        </div>
+      </section>
+
+      <section class="card">
+        <h2>Capture defaults</h2>
+        <p class="card__hint">
+          Used by the side panel's buttons. Claude passes its own options on every tool call, so
+          these do not affect what Claude requests.
+        </p>
+
+        <label class="check-row">
+          <input type="checkbox" id="useReadability" />
+          <span>
+            <b>Strip page clutter (Readability)</b>
+            <em>
+              Removes nav, ads, and footers before converting. Turn off for dashboards, search
+              results, and tables — Readability tends to discard those.
+            </em>
+          </span>
+        </label>
+
+        <label class="check-row">
+          <input type="checkbox" id="includeLinks" />
+          <span>
+            <b>Keep link URLs</b>
+            <em>Write links as <code>[text](url)</code> instead of plain text.</em>
+          </span>
+        </label>
+
+        <label class="field-row">
+          <span class="field-row__label">Selection format</span>
+          <select id="format">
+            <option value="markdown">Markdown — keeps links, emphasis, lists</option>
+            <option value="text">Text — plain visible text only</option>
+            <option value="html">HTML — raw markup</option>
+          </select>
+        </label>
+
+        <label class="check-row">
+          <input type="checkbox" id="includeAttributes" />
+          <span>
+            <b>Include element attributes</b>
+            <em>Also capture <code>href</code>, <code>src</code>, <code>alt</code>, and <code>data-*</code>.</em>
+          </span>
+        </label>
+
+        <div class="card__actions">
+          <button type="button" class="btn btn--primary" id="btn-save-2">Save</button>
+        </div>
+      </section>
+
+      <section class="card">
+        <h2>Page access</h2>
+        <p class="card__hint" id="permission-text">Checking…</p>
+        <div class="card__actions">
+          <button type="button" class="btn btn--primary" id="btn-grant">Grant page access</button>
+          <button type="button" class="btn" id="btn-revoke">Revoke</button>
+        </div>
+        <p class="card__hint">
+          Claude can only read a tab when this is granted. Revoking stops all scraping until you
+          grant it again.
+        </p>
+      </section>
+    </div>
+
+    <div class="toast" id="toast" role="status" aria-live="polite" hidden></div>
+
+    <script src="options.js" type="module"></script>
+  </body>
+</html>

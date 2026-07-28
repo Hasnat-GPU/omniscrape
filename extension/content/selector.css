@@ -1,0 +1,68 @@
+/**
+ * Styles injected into the page during selection mode.
+ *
+ * Two rules govern everything here:
+ *
+ * 1. Never change layout. Highlights use `outline` and `box-shadow`, never
+ *    `border` or `padding` — a border would reflow the page under the user's
+ *    cursor and move the very element they are aiming at.
+ *
+ * 2. Win against the page. Site stylesheets are arbitrary and often aggressive,
+ *    so every declaration is `!important`. This file only ever applies to
+ *    elements carrying a `data-omniscrape-*` attribute we set ourselves.
+ *
+ * The floating toolbar and cursor badge are NOT styled here — they live in a
+ * shadow root (see selector.js) so page CSS cannot reach them at all.
+ */
+
+/* Element under the cursor, not yet chosen. */
+[data-omniscrape-hover] {
+  outline: 2px dashed #6366f1 !important;
+  outline-offset: 1px !important;
+  background-color: rgba(99, 102, 241, 0.08) !important;
+  cursor: crosshair !important;
+}
+
+/* An element the user clicked. */
+[data-omniscrape-selected] {
+  outline: 2px solid #4f46e5 !important;
+  outline-offset: 1px !important;
+  background-color: rgba(79, 70, 229, 0.12) !important;
+}
+
+/* Other elements the same field's selector also matches — the "you picked one
+   row and got the whole column" feedback that makes list scraping legible. */
+[data-omniscrape-match] {
+  outline: 2px dotted #10b981 !important;
+  outline-offset: 1px !important;
+  background-color: rgba(16, 185, 129, 0.08) !important;
+}
+
+/* Selected wins over match when an element is both. */
+[data-omniscrape-selected][data-omniscrape-match] {
+  outline: 2px solid #4f46e5 !important;
+  background-color: rgba(79, 70, 229, 0.12) !important;
+}
+
+/* Crosshair everywhere while selecting, so the mode is unmistakable. */
+html[data-omniscrape-active],
+html[data-omniscrape-active] * {
+  cursor: crosshair !important;
+}
+
+/* Suppress text selection while clicking around, otherwise dragging the mouse
+   paints the page blue and the highlights become impossible to read. */
+html[data-omniscrape-active] * {
+  user-select: none !important;
+  -webkit-user-select: none !important;
+}
+
+/* Respect users who asked for less motion. Nothing here animates today; this
+   guards the transitions added by the shadow-root UI. */
+@media (prefers-reduced-motion: reduce) {
+  [data-omniscrape-hover],
+  [data-omniscrape-selected],
+  [data-omniscrape-match] {
+    transition: none !important;
+  }
+}
